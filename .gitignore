@@ -1,6 +1,6 @@
 RandomOS/bootloader/limine
-RandomOS/firmware-ovmf-x64
-RandomOS/kernel/limine.h
+RandomOS/firmware/ovmf-x64
+RandomOS/kernel/interface/limine.h
 *.elf
 *.iso
 *.hdd
