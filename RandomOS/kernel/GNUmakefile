@@ -1,6 +1,9 @@
 # Nuke built-in rules and variables.
 override MAKEFLAGS += -rR
 
+# Recursive wildcard
+rwildcard = $(foreach d, $(wildcard $(1:=/*)), $(call rwildcard ,$d, $2) $(filter $(subst *, %, $2), $d))
+
 # This is the name that our final kernel executable will have.
 # Change as needed.
 override KERNEL := kernel.elf
@@ -52,7 +55,8 @@ override CFLAGS +=       \
     -mno-sse             \
     -mno-sse2            \
     -mno-red-zone        \
-    -mcmodel=kernel
+    -mcmodel=kernel      \
+    -I ./interface
 
 override CPPFLAGS := \
     -I.              \
@@ -77,36 +81,34 @@ override NASMFLAGS += \
     -f elf64
 
 # Use find to glob all *.c, *.S, and *.asm files in the directory and extract the object names.
-override CFILES := $(shell find . -type f -name '*.c')
-override ASFILES := $(shell find . -type f -name '*.S')
-override NASMFILES := $(shell find . -type f -name '*.asm')
-override OBJ := $(CFILES:.c=.o) $(ASFILES:.S=.o) $(NASMFILES:.asm=.o)
-override HEADER_DEPS := $(CFILES:.c=.d) $(ASFILES:.S=.d)
+override CFILES := $(call rwildcard, src, *.c)
+override ASFILES := $(call rwildcard, src, *.S)
+override NASMFILES := $(call rwildcard, src, *.asm)
+override OBJ := $(patsubst src/%.c, obj/C/%.o, $(CFILES)) $(patsubst src/%.S, obj/Assembly/%.o, $(ASFILES)) $(patsubst src/%.asm, obj/Assembly/%.o, $(NASMFILES))
 
 # Default target.
 .PHONY: all
 all: $(KERNEL)
 
 limine.h:
-	curl https://raw.githubusercontent.com/limine-bootloader/limine/trunk/limine.h -o $@
+	cd interface && curl https://raw.githubusercontent.com/limine-bootloader/limine/trunk/limine.h -o $@
 
 # Link rules for the final kernel executable.
 $(KERNEL): $(OBJ)
 	$(LD) $(OBJ) $(LDFLAGS) -o $@
 
-# Include header dependencies.
--include $(HEADER_DEPS)
-
 # Compilation rules for *.c files.
-%.o: %.c limine.h
+obj/C/%.o: src/%.c limine.h
+	mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 # Compilation rules for *.S files.
-%.o: %.S limine.h
+obj/Assembly/%.o: src/%.S limine.h
+	mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 # Compilation rules for *.asm (nasm) files.
-%.o: %.asm
+obj/Assembly/%.o: src/%.asm
 	nasm $(NASMFLAGS) $< -o $@
 
 # Remove object files and the final executable.
