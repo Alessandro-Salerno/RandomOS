@@ -109,6 +109,7 @@ obj/Assembly/%.o: src/%.S limine.h
 
 # Compilation rules for *.asm (nasm) files.
 obj/Assembly/%.o: src/%.asm
+	mkdir -p $(@D)
 	nasm $(NASMFLAGS) $< -o $@
 
 # Remove object files and the final executable.

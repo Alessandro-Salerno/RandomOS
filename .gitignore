@@ -8,3 +8,4 @@ RandomOS/iso_root
 *.o
 *.d
 .DS_STore
+.vscode/
