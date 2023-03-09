@@ -1,8 +1,9 @@
-limine
-ovmf-x64
-kernel/limine.h
+RandomOS/bootloader/limine
+RandomOS/firmware-ovmf-x64
+RandomOS/kernel/limine.h
 *.elf
 *.iso
 *.hdd
 *.o
 *.d
+.DS_STore
